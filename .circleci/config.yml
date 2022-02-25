@@ -77,3 +77,21 @@ jobs:
       - run:
           name: Unit Tests
           command: yarn test
+
+
+
+###################
+#  WORKFLOWS
+###################
+
+workflows:
+  version: 2.1
+  commit:
+    jobs:
+      - checkout-and-install-deps:
+          filters:
+            tags:
+              only: /.*/
+      - test:
+          requires:
+            - checkout-and-install-deps
