@@ -1,0 +1,96 @@
+version: 2.1
+
+###################
+#  EXECUTORS
+###################
+
+executors:
+  node:
+    docker:
+      - image: cimg/node:16.13
+
+  android:
+    docker:
+      - image: circleci/android@sha256:1be18bcc7582be501a1986bb222561298c7f7760673a50c21d5ec782b5d70b45
+
+  ios:
+    macos:
+      xcode: '13.2.1'
+
+  gcp:
+    docker:
+      - image: europe-west1-docker.pkg.dev/passculture-infra-prod/pass-culture-tools/node-gcp:16
+        auth:
+          username: _json_key # default username when using a JSON key file to authenticate
+          password: $GCP_INFRA_KEY
+
+
+###################
+#  COMMANDS
+###################
+
+commands:
+  install_node_version:
+    description: Install Node version with NVM
+    steps:
+      - run:
+          name: Install Node version with NVM
+          command: |
+            set +e
+            curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.39.1/install.sh | bash
+            echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
+            echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
+            source $BASH_ENV
+            nvm install --default
+            nvm use
+
+  install_node_modules:
+    description: Install Node Dependencies
+    steps:
+      - restore_cache:
+          name: Restore Node Modules
+          keys:
+            - node-modules-v1-{{ checksum "yarn.lock" }}-{{ arch }}
+      - run:
+          name: Install Dependencies
+          command: yarn install --immutable
+      - save_cache:
+          name: Save Node Modules
+          key: node-modules-v1-{{ checksum "yarn.lock" }}-{{ arch }}
+          paths:
+            - node_modules
+
+  build:
+    description: Build
+    parameters:
+      env:
+        type: string
+    steps:
+      - install_node_version
+      - install_node_modules
+      - run: |
+          yarn build
+#          yarn build:<< parameters.env >>
+
+
+###################
+#  JOBS
+###################
+
+jobs:
+  checkout-and-install-deps:
+    executor: node
+    working_directory: ~/thebullishers
+    steps:
+      - checkout
+      - install_node_modules
+
+  test:
+    executor: node
+    working_directory: ~/thebullishers
+    steps:
+      - checkout
+      - install_node_modules
+      - run:
+          name: Unit Tests
+          command: yarn test
