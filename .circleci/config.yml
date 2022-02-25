@@ -9,22 +9,6 @@ executors:
     docker:
       - image: cimg/node:16.13
 
-  android:
-    docker:
-      - image: circleci/android@sha256:1be18bcc7582be501a1986bb222561298c7f7760673a50c21d5ec782b5d70b45
-
-  ios:
-    macos:
-      xcode: '13.2.1'
-
-  gcp:
-    docker:
-      - image: europe-west1-docker.pkg.dev/passculture-infra-prod/pass-culture-tools/node-gcp:16
-        auth:
-          username: _json_key # default username when using a JSON key file to authenticate
-          password: $GCP_INFRA_KEY
-
-
 ###################
 #  COMMANDS
 ###################
@@ -70,7 +54,6 @@ commands:
       - install_node_modules
       - run: |
           yarn build
-#          yarn build:<< parameters.env >>
 
 
 ###################
