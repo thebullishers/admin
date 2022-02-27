@@ -8,6 +8,9 @@ executors:
   node:
     docker:
       - image: cimg/node:16.13
+  gcp_cli:
+    docker:
+      - image: google/cloud-sdk:374.0.0-slim
 
 ###################
 #  COMMANDS
@@ -27,6 +30,7 @@ commands:
             source $BASH_ENV
             nvm install --default
             nvm use
+            npm install --global yarn
 
   install_node_modules:
     description: Install Node Dependencies
@@ -55,6 +59,14 @@ commands:
       - run: |
           yarn build
 
+  authenticate-gcp:
+    steps:
+      - run:
+          name: Authenticate to GCP
+          command: |
+            echo $GCP_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project thebullishers
+
 
 ###################
 #  JOBS
@@ -77,3 +89,23 @@ jobs:
       - run:
           name: Unit Tests
           command: yarn test
+
+  push_to_bucket:
+    executor: gcp_cli
+    working_directory: ~/thebullishers
+    steps:
+      - checkout
+      - install_node_version
+      - install_node_modules
+      - authenticate-gcp
+      - run:
+          name: push_to_bucket
+          command: |
+            set +eo pipefail
+            gsutil rsync -r ./public gs://admin-thebullishers-com
+
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - push_to_bucket
