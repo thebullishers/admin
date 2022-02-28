@@ -8,6 +8,9 @@ executors:
   node:
     docker:
       - image: cimg/node:16.13
+  gcp_cli:
+    docker:
+      - image: google/cloud-sdk:374.0.0-slim
 
 ###################
 #  COMMANDS
@@ -27,6 +30,7 @@ commands:
             source $BASH_ENV
             nvm install --default
             nvm use
+            npm install --global yarn
 
   install_node_modules:
     description: Install Node Dependencies
@@ -46,15 +50,31 @@ commands:
 
   build:
     description: Build
-    parameters:
-      env:
-        type: string
     steps:
       - install_node_version
       - install_node_modules
       - run: |
           yarn build
 
+  authenticate-gcp:
+    steps:
+      - run:
+          name: Authenticate to GCP
+          command: |
+            echo $GCP_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project thebullishers
+
+  invalidate-cache:
+    description: Invalidate Cache asynchronously
+    parameters:
+      url_map_name:
+        type: string
+    steps:
+      - run:
+          name: Invalidate cache
+          command: |
+            gcloud compute url-maps invalidate-cdn-cache << parameters.url_map_name >> --path "/*"  --async
+            echo "An invalidateCache operation has been requested. You can follow its progress on https://console.cloud.google.com/compute/operations"
 
 ###################
 #  JOBS
@@ -74,6 +94,44 @@ jobs:
     steps:
       - checkout
       - install_node_modules
+      - install_node_version
       - run:
           name: Unit Tests
           command: yarn test
+
+  deploy-admin:
+    description: Push the built admin to a cloudstorage bucket
+    executor: gcp_cli
+    working_directory: ~/thebullishers
+    steps:
+      - checkout
+      - install_node_modules
+      - install_node_version
+      - build
+      - run:
+          name: push-to-bucket
+          command: |
+            set +eo pipefail
+            gsutil rsync -r ./public gs://admin-thebullishers-com
+      - invalidate-cache:
+          url_map_name: admin-thebullishers-com-url-map
+
+workflows:
+  version: 2.1
+  commit:
+    jobs:
+      - checkout-and-install-deps:
+          filters:
+            tags:
+              only: /.*/
+      - test:
+          requires:
+            - checkout-and-install-deps
+      - deploy-admin:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: master
+          requires:
+            - test
