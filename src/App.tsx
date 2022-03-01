@@ -5,12 +5,19 @@ import { dataProvider } from './providers/dataProvider'
 import { SignalList } from './resources/Signals/SignalList'
 import { SignalCreate } from './resources/Signals/SignalCreate'
 import { authProvider } from './providers/authProvider'
+import { createBrowserHistory } from 'history'
+
+const history = createBrowserHistory()
 
 function App() {
   return (
     <>
       <CssBaseline />
-      <Admin dataProvider={dataProvider} authProvider={authProvider}>
+      <Admin
+        history={history}
+        dataProvider={dataProvider}
+        authProvider={authProvider}
+      >
         <Resource name="signals" list={SignalList} create={SignalCreate} />
       </Admin>
     </>
