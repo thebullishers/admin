@@ -85,6 +85,7 @@ jobs:
     executor: node
     working_directory: ~/thebullishers
     steps:
+      - install_node_version
       - checkout
       - install_node_modules
 
@@ -92,6 +93,7 @@ jobs:
     executor: node
     working_directory: ~/thebullishers
     steps:
+      - install_node_version
       - checkout
       - install_node_modules
       - install_node_version
@@ -104,15 +106,16 @@ jobs:
     executor: gcp_cli
     working_directory: ~/thebullishers
     steps:
+      - install_node_version
       - checkout
       - install_node_modules
-      - install_node_version
       - build
+      - authenticate-gcp
       - run:
           name: push-to-bucket
           command: |
             set +eo pipefail
-            gsutil rsync -r ./public gs://admin-thebullishers-com
+            gsutil rsync -r ./build gs://admin-thebullishers-com
       - invalidate-cache:
           url_map_name: admin-thebullishers-com-url-map
 
@@ -132,6 +135,7 @@ workflows:
             tags:
               ignore: /.*/
             branches:
-              only: master
+              only:
+                - master
           requires:
             - test
