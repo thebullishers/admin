@@ -21,7 +21,11 @@ function App() {
         authProvider={authProvider}
         i18nProvider={i18nProvider}
       >
-        <Resource name="signals" list={SignalList} create={SignalCreate} />
+        {/* the bullishers */}
+        <Resource name="thebullishers/api/v1/signals" list={SignalList} create={SignalCreate} />
+
+        {/* binance */}
+        <Resource name="binance/api/v1/exchangeInfo" />
       </Admin>
     </>
   )
