@@ -1,6 +1,6 @@
 import React from 'react'
 import {
-  // ReferenceInput,
+  ReferenceInput,
   AutocompleteInput,
   Create,
   SimpleForm,
@@ -15,22 +15,23 @@ export function SignalCreate(props = {}) {
   return (
     <Create {...props}>
       <SimpleForm>
-        {/*<ReferenceInput*/}
-        {/*  label="Binance symbol"*/}
-        {/*  source="baseAsset"*/}
-        {/*  reference="binance/api/v1/exchangeInfo"*/}
-        {/*>*/}
+        <ReferenceInput
+          // label="Binance symbol"
+          source="baseAsset"
+          reference="binance/api/v1/exchangeInfo"
+        >
           <AutocompleteInput
-            source="pair1"
-            choices={[
-              { id: 'BTC', name: 'BTC' },
-              { id: 'ETH', name: 'ETH' },
-              { id: 'EGLD', name: 'EGLD' },
-              { id: 'LUNA', name: 'LUNA' },
-              { id: 'LTC', name: 'LTC' },
-            ]}
+            optionText="baseAsset"
+            // source="pair1"
+            // choices={[
+            //   { id: 'BTC', name: 'BTC' },
+            //   { id: 'ETH', name: 'ETH' },
+            //   { id: 'EGLD', name: 'EGLD' },
+            //   { id: 'LUNA', name: 'LUNA' },
+            //   { id: 'LTC', name: 'LTC' },
+            // ]}
           />
-        {/*</ReferenceInput>*/}
+        </ReferenceInput>
         <TextInput source="pair2" defaultValue="USDT" disabled />
         <SelectInput
           source="direction"
